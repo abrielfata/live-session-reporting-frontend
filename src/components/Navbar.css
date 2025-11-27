@@ -16,12 +16,59 @@
     align-items: center;
 }
 
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
 .navbar-logo h2 {
     color: #ecf0f1;
     margin: 0;
     font-size: 20px;
     font-weight: 600;
     font-family: 'Georgia', serif;
+}
+
+/* ✅ NEW: Navigation Links */
+.navbar-links {
+    display: flex;
+    gap: 5px;
+}
+
+.nav-link {
+    color: #ecf0f1;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Arial', sans-serif;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.nav-link:hover {
+    background: rgba(236, 240, 241, 0.1);
+}
+
+.nav-link.active {
+    background: rgba(236, 240, 241, 0.15);
+    color: #fff;
+}
+
+.pending-badge {
+    position: absolute;
+    top: 3px;
+    right: 8px;
+    background: #e74c3c;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
 }
 
 .navbar-right {
@@ -69,4 +116,29 @@
 .logout-btn:hover {
     background: #ecf0f1;
     color: #2c3e50;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar-container {
+        padding: 12px 20px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .navbar-left {
+        width: 100%;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .navbar-links {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .navbar-right {
+        width: 100%;
+        justify-content: space-between;
+    }
 }
