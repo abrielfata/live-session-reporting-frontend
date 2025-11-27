@@ -16,7 +16,7 @@ function Navbar() {
         <nav className="navbar">
             <div className="navbar-container">
                 <div className="navbar-logo">
-                    <h2>📊 Live Session Reporting</h2>
+                    <h2>Live Session Reporting</h2>
                 </div>
                 
                 <div className="navbar-right">

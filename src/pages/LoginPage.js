@@ -44,15 +44,15 @@ function LoginPage() {
     return (
         <div className="login-container">
             <div className="login-box">
-                <h1>🔐 Live Session Reporting</h1>
-                <p className="subtitle">Silakan login untuk melanjutkan</p>
+                <h1>Live Session Reporting</h1>
+                <p className="subtitle">Please sign in to continue</p>
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Telegram User ID</label>
                         <input
                             type="text"
-                            placeholder="Contoh: 123456789"
+                            placeholder="Example: 123456789"
                             value={telegramUserId}
                             onChange={(e) => setTelegramUserId(e.target.value)}
                             disabled={loading}
@@ -63,7 +63,7 @@ function LoginPage() {
                         <label>Username</label>
                         <input
                             type="text"
-                            placeholder="Contoh: john_doe"
+                            placeholder="Example: john_doe"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             disabled={loading}
@@ -72,7 +72,7 @@ function LoginPage() {
 
                     {error && (
                         <div className="error-message">
-                            ⚠️ {error}
+                            {error}
                         </div>
                     )}
 
@@ -82,7 +82,7 @@ function LoginPage() {
                 </form>
 
                 <div className="login-info">
-                    <p>💡 <strong>Demo Accounts:</strong></p>
+                    <p><strong>Demo Accounts</strong></p>
                     <p>Manager: <code>123456789</code></p>
                     <p>Host: <code>987654321</code></p>
                 </div>

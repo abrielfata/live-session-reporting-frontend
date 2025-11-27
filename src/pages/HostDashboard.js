@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '../components/Navbar';
 import { reportsAPI } from '../services/api';
 import './HostDashboard.css';
@@ -8,11 +8,7 @@ function HostDashboard() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
 
-    useEffect(() => {
-        fetchMyReports();
-    }, [filter]);
-
-    const fetchMyReports = async () => {
+    const fetchMyReports = useCallback(async () => {
         setLoading(true);
         try {
             const params = filter !== 'ALL' ? { status: filter } : {};
@@ -23,9 +19,19 @@ function HostDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
+
+    useEffect(() => {
+        fetchMyReports();
+    }, [fetchMyReports]);
 
     const formatCurrency = (amount) => {
+        // Format dalam jutaan atau ribuan untuk lebih compact
+        if (amount >= 1000000) {
+            return 'Rp ' + (amount / 1000000).toFixed(1) + 'M';
+        } else if (amount >= 1000) {
+            return 'Rp ' + (amount / 1000).toFixed(0) + 'K';
+        }
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -43,7 +49,6 @@ function HostDashboard() {
         });
     };
 
-    // Calculate statistics from reports
     const stats = {
         total: reports.length,
         pending: reports.filter(r => r.status === 'PENDING').length,
@@ -59,21 +64,18 @@ function HostDashboard() {
             <Navbar />
             
             <div className="dashboard-container">
-                <h1>📱 Host Dashboard</h1>
-                <p className="subtitle">Laporan Live Session Anda</p>
+                <h1>Host Dashboard</h1>
+                <p>Your live session reports</p>
 
-                {/* Statistics Cards */}
                 <div className="stats-grid">
                     <div className="stat-card">
-                        <div className="stat-icon">📄</div>
                         <div className="stat-info">
                             <h3>{stats.total}</h3>
-                            <p>Total Laporan</p>
+                            <p>Total Reports</p>
                         </div>
                     </div>
 
                     <div className="stat-card pending">
-                        <div className="stat-icon">⏳</div>
                         <div className="stat-info">
                             <h3>{stats.pending}</h3>
                             <p>Pending</p>
@@ -81,7 +83,6 @@ function HostDashboard() {
                     </div>
 
                     <div className="stat-card verified">
-                        <div className="stat-icon">✅</div>
                         <div className="stat-info">
                             <h3>{stats.verified}</h3>
                             <p>Verified</p>
@@ -89,7 +90,6 @@ function HostDashboard() {
                     </div>
 
                     <div className="stat-card rejected">
-                        <div className="stat-icon">❌</div>
                         <div className="stat-info">
                             <h3>{stats.rejected}</h3>
                             <p>Rejected</p>
@@ -97,17 +97,15 @@ function HostDashboard() {
                     </div>
 
                     <div className="stat-card total-gmv">
-                        <div className="stat-icon">💰</div>
                         <div className="stat-info">
                             <h3>{formatCurrency(stats.totalGMV)}</h3>
-                            <p>Total Verified GMV</p>
+                            <p>Total GMV</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Filter Buttons */}
                 <div className="filter-section">
-                    <h2>Daftar Laporan</h2>
+                    <h2>Report List</h2>
                     <div className="filter-buttons">
                         <button 
                             className={filter === 'ALL' ? 'active' : ''} 
@@ -136,19 +134,18 @@ function HostDashboard() {
                     </div>
                 </div>
 
-                {/* Reports List */}
                 {loading ? (
                     <div className="loading">Loading reports...</div>
                 ) : (
                     <div className="reports-list">
                         {reports.length === 0 ? (
                             <div className="empty-state">
-                                <p>📭 Belum ada laporan</p>
-                                <small>Kirim screenshot GMV Anda melalui Telegram Bot</small>
+                                <p>No reports yet</p>
+                                <small>Submit your GMV screenshot via Telegram Bot</small>
                             </div>
                         ) : (
                             reports.map(report => (
-                                <div key={report.id} className="report-card">
+                                <div key={report.id} className={`report-card ${report.status.toLowerCase()}`}>
                                     <div className="report-header">
                                         <div>
                                             <h3>Report #{report.id}</h3>
@@ -180,7 +177,7 @@ function HostDashboard() {
                                                 rel="noopener noreferrer"
                                                 className="view-screenshot"
                                             >
-                                                📷 View Screenshot
+                                                View Screenshot
                                             </a>
                                         )}
                                     </div>

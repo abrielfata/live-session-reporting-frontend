@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '../components/Navbar';
 import { reportsAPI } from '../services/api';
 import './ManagerDashboard.css';
@@ -7,28 +7,19 @@ function ManagerDashboard() {
     const [statistics, setStatistics] = useState(null);
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('ALL'); // ALL, PENDING, VERIFIED, REJECTED
+    const [filter, setFilter] = useState('ALL');
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Fetch statistics
-    useEffect(() => {
-        fetchStatistics();
-    }, []);
-
-    // Fetch reports based on filter
-    useEffect(() => {
-        fetchReports();
-    }, [filter]);
-
-    const fetchStatistics = async () => {
+    const fetchStatistics = useCallback(async () => {
         try {
             const response = await reportsAPI.getStatistics();
             setStatistics(response.data.data);
         } catch (error) {
             console.error('Error fetching statistics:', error);
         }
-    };
+    }, []);
 
-    const fetchReports = async () => {
+    const fetchReports = useCallback(async () => {
         setLoading(true);
         try {
             const params = filter !== 'ALL' ? { status: filter } : {};
@@ -39,14 +30,22 @@ function ManagerDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
+
+    useEffect(() => {
+        fetchStatistics();
+    }, [fetchStatistics]);
+
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
 
     const handleUpdateStatus = async (reportId, newStatus) => {
         try {
             await reportsAPI.updateReportStatus(reportId, newStatus, '');
             alert(`Report berhasil di${newStatus === 'VERIFIED' ? 'verifikasi' : 'tolak'}`);
-            fetchReports(); // Refresh data
-            fetchStatistics(); // Refresh statistics
+            fetchReports();
+            fetchStatistics();
         } catch (error) {
             console.error('Error updating status:', error);
             alert('Gagal mengupdate status');
@@ -54,6 +53,12 @@ function ManagerDashboard() {
     };
 
     const formatCurrency = (amount) => {
+        // Format dalam jutaan atau ribuan untuk lebih compact
+        if (amount >= 1000000) {
+            return 'Rp ' + (amount / 1000000).toFixed(1) + 'M';
+        } else if (amount >= 1000) {
+            return 'Rp ' + (amount / 1000).toFixed(0) + 'K';
+        }
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -71,18 +76,52 @@ function ManagerDashboard() {
         });
     };
 
+    // Filter reports berdasarkan search term
+    const filteredReports = reports.filter(report => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            report.host_full_name.toLowerCase().includes(searchLower) ||
+            report.host_username.toLowerCase().includes(searchLower)
+        );
+    });
+
+    // Hitung analytics per host
+    const hostAnalytics = () => {
+        const hostMap = {};
+        
+        reports.forEach(report => {
+            const hostId = report.host_username;
+            if (!hostMap[hostId]) {
+                hostMap[hostId] = {
+                    name: report.host_full_name,
+                    username: report.host_username,
+                    totalReports: 0,
+                    verifiedReports: 0,
+                    totalGMV: 0
+                };
+            }
+            
+            hostMap[hostId].totalReports++;
+            if (report.status === 'VERIFIED') {
+                hostMap[hostId].verifiedReports++;
+                hostMap[hostId].totalGMV += parseFloat(report.reported_gmv);
+            }
+        });
+        
+        return Object.values(hostMap).sort((a, b) => b.totalGMV - a.totalGMV);
+    };
+
     return (
         <div className="dashboard">
             <Navbar />
             
             <div className="dashboard-container">
-                <h1>📊 Manager Dashboard</h1>
+                <h1>Manager Dashboard</h1>
+                <p>Manage and review live session reports</p>
 
-                {/* Statistics Cards */}
                 {statistics && (
                     <div className="stats-grid">
                         <div className="stat-card">
-                            <div className="stat-icon">📄</div>
                             <div className="stat-info">
                                 <h3>{statistics.total_reports}</h3>
                                 <p>Total Reports</p>
@@ -90,7 +129,6 @@ function ManagerDashboard() {
                         </div>
 
                         <div className="stat-card pending">
-                            <div className="stat-icon">⏳</div>
                             <div className="stat-info">
                                 <h3>{statistics.pending_reports}</h3>
                                 <p>Pending</p>
@@ -98,7 +136,6 @@ function ManagerDashboard() {
                         </div>
 
                         <div className="stat-card verified">
-                            <div className="stat-icon">✅</div>
                             <div className="stat-info">
                                 <h3>{statistics.verified_reports}</h3>
                                 <p>Verified</p>
@@ -106,7 +143,6 @@ function ManagerDashboard() {
                         </div>
 
                         <div className="stat-card rejected">
-                            <div className="stat-icon">❌</div>
                             <div className="stat-info">
                                 <h3>{statistics.rejected_reports}</h3>
                                 <p>Rejected</p>
@@ -114,15 +150,13 @@ function ManagerDashboard() {
                         </div>
 
                         <div className="stat-card total-gmv">
-                            <div className="stat-icon">💰</div>
                             <div className="stat-info">
                                 <h3>{formatCurrency(statistics.total_verified_gmv)}</h3>
-                                <p>Total Verified GMV</p>
+                                <p>Total GMV</p>
                             </div>
                         </div>
 
                         <div className="stat-card avg-gmv">
-                            <div className="stat-icon">📈</div>
                             <div className="stat-info">
                                 <h3>{formatCurrency(statistics.avg_verified_gmv)}</h3>
                                 <p>Average GMV</p>
@@ -131,38 +165,75 @@ function ManagerDashboard() {
                     </div>
                 )}
 
-                {/* Filter Buttons */}
                 <div className="filter-section">
-                    <h2>Laporan Live Session</h2>
-                    <div className="filter-buttons">
-                        <button 
-                            className={filter === 'ALL' ? 'active' : ''} 
-                            onClick={() => setFilter('ALL')}
-                        >
-                            All
-                        </button>
-                        <button 
-                            className={filter === 'PENDING' ? 'active' : ''} 
-                            onClick={() => setFilter('PENDING')}
-                        >
-                            Pending
-                        </button>
-                        <button 
-                            className={filter === 'VERIFIED' ? 'active' : ''} 
-                            onClick={() => setFilter('VERIFIED')}
-                        >
-                            Verified
-                        </button>
-                        <button 
-                            className={filter === 'REJECTED' ? 'active' : ''} 
-                            onClick={() => setFilter('REJECTED')}
-                        >
-                            Rejected
-                        </button>
+                    <h2>Session Reports</h2>
+                    <div className="filter-controls">
+                        <div className="search-box">
+                            <input
+                                type="text"
+                                placeholder="Search host name..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="filter-buttons">
+                            <button 
+                                className={filter === 'ALL' ? 'active' : ''} 
+                                onClick={() => setFilter('ALL')}
+                            >
+                                All
+                            </button>
+                            <button 
+                                className={filter === 'PENDING' ? 'active' : ''} 
+                                onClick={() => setFilter('PENDING')}
+                            >
+                                Pending
+                            </button>
+                            <button 
+                                className={filter === 'VERIFIED' ? 'active' : ''} 
+                                onClick={() => setFilter('VERIFIED')}
+                            >
+                                Verified
+                            </button>
+                            <button 
+                                className={filter === 'REJECTED' ? 'active' : ''} 
+                                onClick={() => setFilter('REJECTED')}
+                            >
+                                Rejected
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Reports Table */}
+                {/* Host Analytics */}
+                {!loading && reports.length > 0 && (
+                    <div className="host-analytics">
+                        <h3>Host Performance</h3>
+                        <div className="host-list">
+                            {hostAnalytics().map(host => (
+                                <div key={host.username} className="host-item">
+                                    <div>
+                                        <div className="host-name">{host.name}</div>
+                                        <small style={{ color: '#95a5a6', fontSize: '12px' }}>@{host.username}</small>
+                                    </div>
+                                    <div className="host-stat">
+                                        <span className="host-stat-label">Total Reports</span>
+                                        <span className="host-stat-value">{host.totalReports}</span>
+                                    </div>
+                                    <div className="host-stat">
+                                        <span className="host-stat-label">Verified</span>
+                                        <span className="host-stat-value">{host.verifiedReports}</span>
+                                    </div>
+                                    <div className="host-stat">
+                                        <span className="host-stat-label">Total GMV</span>
+                                        <span className="host-stat-value">{formatCurrency(host.totalGMV)}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="loading">Loading reports...</div>
                 ) : (
@@ -174,26 +245,25 @@ function ManagerDashboard() {
                                     <th>Host</th>
                                     <th>GMV</th>
                                     <th>Status</th>
-                                    <th>Tanggal</th>
+                                    <th>Date</th>
                                     <th>Screenshot</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {reports.length === 0 ? (
+                                {filteredReports.length === 0 ? (
                                     <tr>
                                         <td colSpan="7" style={{ textAlign: 'center' }}>
-                                            Tidak ada laporan
+                                            {searchTerm ? 'No reports found for this search' : 'No reports available'}
                                         </td>
                                     </tr>
                                 ) : (
-                                    reports.map(report => (
+                                    filteredReports.map(report => (
                                         <tr key={report.id}>
                                             <td>#{report.id}</td>
                                             <td>
-                                                <div>
+                                                <div className="host-info">
                                                     <strong>{report.host_full_name}</strong>
-                                                    <br />
                                                     <small>@{report.host_username}</small>
                                                 </div>
                                             </td>
@@ -219,23 +289,22 @@ function ManagerDashboard() {
                                                 )}
                                             </td>
                                             <td>
-                                                {report.status === 'PENDING' && (
+                                                {report.status === 'PENDING' ? (
                                                     <div className="action-buttons">
                                                         <button 
                                                             className="btn-verify"
                                                             onClick={() => handleUpdateStatus(report.id, 'VERIFIED')}
                                                         >
-                                                            ✓ Verify
+                                                            Verify
                                                         </button>
                                                         <button 
                                                             className="btn-reject"
                                                             onClick={() => handleUpdateStatus(report.id, 'REJECTED')}
                                                         >
-                                                            ✗ Reject
+                                                            Reject
                                                         </button>
                                                     </div>
-                                                )}
-                                                {report.status !== 'PENDING' && (
+                                                ) : (
                                                     <span style={{ color: '#999' }}>-</span>
                                                 )}
                                             </td>

@@ -1,5 +1,6 @@
 .App {
     min-height: 100vh;
+    font-family: 'Georgia', 'Times New Roman', serif;
 }
 
 /* Loading State */
@@ -8,14 +9,14 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
 }
 
 .loading-spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #d4af37;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -31,7 +32,7 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
     text-align: center;
     padding: 20px;
@@ -52,14 +53,16 @@
     color: white;
     text-decoration: none;
     padding: 12px 32px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
+    background: rgba(212, 175, 55, 0.3);
+    border: 2px solid #d4af37;
+    border-radius: 4px;
     margin-top: 20px;
     display: inline-block;
     transition: all 0.3s;
+    font-weight: 600;
 }
 
 .not-found a:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(212, 175, 55, 0.5);
     transform: translateY(-2px);
 }
