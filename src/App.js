@@ -4,7 +4,8 @@ import { useAuth } from './utils/AuthContext';
 import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/ManagerDashboard';
 import HostDashboard from './pages/HostDashboard';
-import UserManagement from './pages/UserManagement'; // ✅ NEW
+import UserManagement from './pages/UserManagement';
+import HostManagement from './pages/HostManagement'; // ✅ NEW
 
 import './App.css';
 
@@ -85,12 +86,22 @@ function App() {
                         } 
                     />
                     
-                    {/* ✅ NEW: Protected Route: User Management (Manager Only) */}
+                    {/* Protected Route: User Management (Manager Only) */}
                     <Route 
                         path="/users" 
                         element={
                             <ProtectedRoute allowedRoles={['MANAGER']}>
                                 <UserManagement />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    
+                    {/* ✅ NEW: Protected Route: Host Management (Manager Only) */}
+                    <Route 
+                        path="/hosts" 
+                        element={
+                            <ProtectedRoute allowedRoles={['MANAGER']}>
+                                <HostManagement />
                             </ProtectedRoute>
                         } 
                     />

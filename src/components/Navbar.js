@@ -42,7 +42,7 @@ function Navbar() {
                         <h2>Live Session Reporting</h2>
                     </div>
                     
-                    {/* ✅ Navigation Links - Only show for Manager */}
+                    {/* Navigation Links - Only show for Manager */}
                     {user?.role === 'MANAGER' && (
                         <div className="navbar-links">
                             <NavLink 
@@ -51,12 +51,20 @@ function Navbar() {
                             >
                                 Dashboard
                             </NavLink>
+                            
+                            <NavLink 
+                                to="/hosts" 
+                                className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                            >
+                                Hosts
+                            </NavLink>
+                            
                             <NavLink 
                                 to="/users" 
                                 className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
                                 style={{ position: 'relative' }}
                             >
-                                User Management
+                                Pending Users
                                 {pendingCount > 0 && (
                                     <span className="pending-badge">{pendingCount}</span>
                                 )}

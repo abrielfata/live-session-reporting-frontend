@@ -27,12 +27,9 @@ api.interceptors.request.use(
 
 // Auth API
 export const authAPI = {
-    // Login
     login: (telegram_user_id, username) => {
         return api.post('/auth/login', { telegram_user_id, username });
     },
-    
-    // Get current user info
     getCurrentUser: () => {
         return api.get('/auth/me');
     }
@@ -40,47 +37,66 @@ export const authAPI = {
 
 // Reports API
 export const reportsAPI = {
-    // Manager: Get all reports
     getAllReports: (params) => {
         return api.get('/reports', { params });
     },
-    
-    // Manager: Get statistics
     getStatistics: () => {
         return api.get('/reports/statistics');
     },
-    
-    // Host: Get my reports
     getMyReports: (params) => {
         return api.get('/reports/my-reports', { params });
     },
-    
-    // Get report by ID
     getReportById: (id) => {
         return api.get(`/reports/${id}`);
     },
-    
-    // Manager: Update report status
     updateReportStatus: (id, status, notes) => {
         return api.put(`/reports/${id}/status`, { status, notes });
     }
 };
 
-// ✅ NEW: Users API
+// Users API
 export const usersAPI = {
-    // Manager: Get pending users (waiting for approval)
     getPendingUsers: () => {
         return api.get('/users/pending');
     },
-    
-    // Manager: Approve user
     approveUser: (userId) => {
         return api.put(`/users/${userId}/approve`);
     },
-    
-    // Manager: Reject user
     rejectUser: (userId) => {
         return api.delete(`/users/${userId}/reject`);
+    }
+};
+
+// ✅ NEW: Hosts API (Full CRUD)
+export const hostsAPI = {
+    // Get all hosts with optional filters
+    getAllHosts: (params) => {
+        return api.get('/hosts', { params });
+    },
+    
+    // Get host by ID
+    getHostById: (id) => {
+        return api.get(`/hosts/${id}`);
+    },
+    
+    // Create new host
+    createHost: (hostData) => {
+        return api.post('/hosts', hostData);
+    },
+    
+    // Update host
+    updateHost: (id, hostData) => {
+        return api.put(`/hosts/${id}`, hostData);
+    },
+    
+    // Delete host
+    deleteHost: (id) => {
+        return api.delete(`/hosts/${id}`);
+    },
+    
+    // Toggle host active status
+    toggleHostStatus: (id) => {
+        return api.patch(`/hosts/${id}/toggle-status`);
     }
 };
 
