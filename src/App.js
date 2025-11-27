@@ -4,6 +4,7 @@ import { useAuth } from './utils/AuthContext';
 import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/ManagerDashboard';
 import HostDashboard from './pages/HostDashboard';
+
 import './App.css';
 
 // Loading Component
