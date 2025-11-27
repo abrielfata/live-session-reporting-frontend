@@ -4,6 +4,7 @@ import { useAuth } from './utils/AuthContext';
 import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/ManagerDashboard';
 import HostDashboard from './pages/HostDashboard';
+import UserManagement from './pages/UserManagement'; // ✅ NEW
 
 import './App.css';
 
@@ -80,6 +81,16 @@ function App() {
                         element={
                             <ProtectedRoute allowedRoles={['MANAGER']}>
                                 <ManagerDashboard />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    
+                    {/* ✅ NEW: Protected Route: User Management (Manager Only) */}
+                    <Route 
+                        path="/users" 
+                        element={
+                            <ProtectedRoute allowedRoles={['MANAGER']}>
+                                <UserManagement />
                             </ProtectedRoute>
                         } 
                     />

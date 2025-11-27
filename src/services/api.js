@@ -66,4 +66,22 @@ export const reportsAPI = {
     }
 };
 
+// ✅ NEW: Users API
+export const usersAPI = {
+    // Manager: Get pending users (waiting for approval)
+    getPendingUsers: () => {
+        return api.get('/users/pending');
+    },
+    
+    // Manager: Approve user
+    approveUser: (userId) => {
+        return api.put(`/users/${userId}/approve`);
+    },
+    
+    // Manager: Reject user
+    rejectUser: (userId) => {
+        return api.delete(`/users/${userId}/reject`);
+    }
+};
+
 export default api;
