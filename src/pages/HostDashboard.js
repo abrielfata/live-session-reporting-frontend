@@ -162,6 +162,16 @@ function HostDashboard() {
                                                 <span className="info-label">GMV:</span>
                                                 <span className="info-value">{formatCurrency(report.reported_gmv)}</span>
                                             </div>
+                                            
+                                            <div className="info-item">
+                                                <span className="info-label">Durasi:</span>
+                                                <span className="info-value" style={{
+                                                    color: report.live_duration ? '#2c3e50' : '#95a5a6'
+                                                }}>
+                                                    ⏱️ {report.live_duration || 'Tidak terdeteksi'}
+                                                </span>
+                                            </div>
+                                            
                                             {report.notes && (
                                                 <div className="info-item">
                                                     <span className="info-label">Notes:</span>

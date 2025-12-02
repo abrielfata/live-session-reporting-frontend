@@ -244,9 +244,9 @@ function ManagerDashboard() {
                                     <th>ID</th>
                                     <th>Host</th>
                                     <th>GMV</th>
+                                    <th>Durasi</th>
                                     <th>Status</th>
                                     <th>Date</th>
-                                    <th>Screenshot</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -269,25 +269,20 @@ function ManagerDashboard() {
                                             </td>
                                             <td><strong>{formatCurrency(report.reported_gmv)}</strong></td>
                                             <td>
+                                                <span style={{ 
+                                                    color: report.live_duration ? '#2c3e50' : '#95a5a6',
+                                                    fontWeight: report.live_duration ? '500' : 'normal',
+                                                    fontSize: '13px'
+                                                }}>
+                                                    ⏱️ {report.live_duration || 'N/A'}
+                                                </span>
+                                            </td>
+                                            <td>
                                                 <span className={`status-badge ${report.status.toLowerCase()}`}>
                                                     {report.status}
                                                 </span>
                                             </td>
                                             <td>{formatDate(report.created_at)}</td>
-                                            <td>
-                                                {report.screenshot_url ? (
-                                                    <a 
-                                                        href={report.screenshot_url} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        className="view-link"
-                                                    >
-                                                        View
-                                                    </a>
-                                                ) : (
-                                                    '-'
-                                                )}
-                                            </td>
                                             <td>
                                                 {report.status === 'PENDING' ? (
                                                     <div className="action-buttons">
