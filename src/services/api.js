@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-// Base URL Backend API
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Create axios instance dengan config default
 const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -11,7 +9,6 @@ const api = axios.create({
     }
 });
 
-// Interceptor: Tambahkan token ke setiap request
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -35,13 +32,19 @@ export const authAPI = {
     }
 };
 
-// Reports API
+// Reports API - UPDATED
 export const reportsAPI = {
     getAllReports: (params) => {
         return api.get('/reports', { params });
     },
-    getStatistics: () => {
-        return api.get('/reports/statistics');
+    getStatistics: (params) => {
+        return api.get('/reports/statistics', { params }); // Now accepts month/year
+    },
+    getMonthlyHostStatistics: (params) => {
+        return api.get('/reports/monthly-host-stats', { params }); // NEW
+    },
+    getAvailableMonths: () => {
+        return api.get('/reports/available-months'); // NEW
     },
     getMyReports: (params) => {
         return api.get('/reports/my-reports', { params });
@@ -67,34 +70,23 @@ export const usersAPI = {
     }
 };
 
-// ✅ NEW: Hosts API (Full CRUD)
+// Hosts API
 export const hostsAPI = {
-    // Get all hosts with optional filters
     getAllHosts: (params) => {
         return api.get('/hosts', { params });
     },
-    
-    // Get host by ID
     getHostById: (id) => {
         return api.get(`/hosts/${id}`);
     },
-    
-    // Create new host
     createHost: (hostData) => {
         return api.post('/hosts', hostData);
     },
-    
-    // Update host
     updateHost: (id, hostData) => {
         return api.put(`/hosts/${id}`, hostData);
     },
-    
-    // Delete host
     deleteHost: (id) => {
         return api.delete(`/hosts/${id}`);
     },
-    
-    // Toggle host active status
     toggleHostStatus: (id) => {
         return api.patch(`/hosts/${id}/toggle-status`);
     }
