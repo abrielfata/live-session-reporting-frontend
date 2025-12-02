@@ -5,13 +5,40 @@ import './HostDashboard.css';
 
 function HostDashboard() {
     const [reports, setReports] = useState([]);
+    const [availableMonths, setAvailableMonths] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
+    
+    // Month filter
+    const [selectedMonth, setSelectedMonth] = useState('current');
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    // Fetch available months
+    const fetchAvailableMonths = useCallback(async () => {
+        try {
+            const response = await reportsAPI.getAvailableMonths();
+            setAvailableMonths(response.data.data);
+        } catch (error) {
+            console.error('Error fetching available months:', error);
+        }
+    }, []);
 
     const fetchMyReports = useCallback(async () => {
         setLoading(true);
         try {
-            const params = filter !== 'ALL' ? { status: filter } : {};
+            const params = {};
+            if (filter !== 'ALL') params.status = filter;
+            
+            if (selectedMonth !== 'all') {
+                if (selectedMonth === 'current') {
+                    params.month = new Date().getMonth() + 1;
+                    params.year = new Date().getFullYear();
+                } else {
+                    params.month = parseInt(selectedMonth);
+                    params.year = selectedYear;
+                }
+            }
+            
             const response = await reportsAPI.getMyReports(params);
             setReports(response.data.data.reports);
         } catch (error) {
@@ -19,14 +46,17 @@ function HostDashboard() {
         } finally {
             setLoading(false);
         }
-    }, [filter]);
+    }, [filter, selectedMonth, selectedYear]);
+
+    useEffect(() => {
+        fetchAvailableMonths();
+    }, [fetchAvailableMonths]);
 
     useEffect(() => {
         fetchMyReports();
     }, [fetchMyReports]);
 
     const formatCurrency = (amount) => {
-        // Format dalam jutaan atau ribuan untuk lebih compact
         if (amount >= 1000000) {
             return 'Rp ' + (amount / 1000000).toFixed(1) + 'M';
         } else if (amount >= 1000) {
@@ -49,6 +79,48 @@ function HostDashboard() {
         });
     };
 
+    // Calculate total live hours from duration strings
+    const calculateTotalLiveHours = () => {
+        let totalMinutes = 0;
+        
+        reports.forEach(report => {
+            if (report.live_duration && report.status === 'VERIFIED') {
+                const duration = report.live_duration;
+                
+                // Extract hours
+                const hoursMatch = duration.match(/(\d+)\s*jam/);
+                if (hoursMatch) {
+                    totalMinutes += parseInt(hoursMatch[1]) * 60;
+                }
+                
+                // Extract minutes
+                const minutesMatch = duration.match(/(\d+)\s*menit/);
+                if (minutesMatch) {
+                    totalMinutes += parseInt(minutesMatch[1]);
+                }
+            }
+        });
+        
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        
+        if (hours === 0 && minutes === 0) return '0 jam';
+        if (hours === 0) return `${minutes} menit`;
+        if (minutes === 0) return `${hours} jam`;
+        return `${hours} jam ${minutes} menit`;
+    };
+
+    const getMonthDisplay = () => {
+        if (selectedMonth === 'all') return 'All Time';
+        if (selectedMonth === 'current') {
+            const now = new Date();
+            return now.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+        }
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                           'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        return `${monthNames[selectedMonth - 1]} ${selectedYear}`;
+    };
+
     const stats = {
         total: reports.length,
         pending: reports.filter(r => r.status === 'PENDING').length,
@@ -56,7 +128,8 @@ function HostDashboard() {
         rejected: reports.filter(r => r.status === 'REJECTED').length,
         totalGMV: reports
             .filter(r => r.status === 'VERIFIED')
-            .reduce((sum, r) => sum + parseFloat(r.reported_gmv), 0)
+            .reduce((sum, r) => sum + parseFloat(r.reported_gmv), 0),
+        totalLiveHours: calculateTotalLiveHours()
     };
 
     return (
@@ -67,6 +140,35 @@ function HostDashboard() {
                 <h1>Host Dashboard</h1>
                 <p>Your live session reports</p>
 
+                {/* Month Filter */}
+                <div className="month-filter-section">
+                    <div className="month-filter-label">
+                        <strong>📅 Period:</strong> {getMonthDisplay()}
+                    </div>
+                    <select 
+                        className="month-filter-select"
+                        value={selectedMonth}
+                        onChange={(e) => {
+                            setSelectedMonth(e.target.value);
+                            if (e.target.value !== 'current' && e.target.value !== 'all') {
+                                const selected = availableMonths.find(m => m.month === parseInt(e.target.value));
+                                if (selected) setSelectedYear(selected.year);
+                            }
+                        }}
+                    >
+                        <option value="current">Current Month</option>
+                        <option value="all">All Time</option>
+                        <optgroup label="History">
+                            {availableMonths.map(month => (
+                                <option key={`${month.year}-${month.month}`} value={month.month}>
+                                    {month.display_name} ({month.report_count} reports)
+                                </option>
+                            ))}
+                        </optgroup>
+                    </select>
+                </div>
+
+                {/* Statistics Cards */}
                 <div className="stats-grid">
                     <div className="stat-card">
                         <div className="stat-info">
@@ -100,6 +202,14 @@ function HostDashboard() {
                         <div className="stat-info">
                             <h3>{formatCurrency(stats.totalGMV)}</h3>
                             <p>Total GMV</p>
+                        </div>
+                    </div>
+
+                    {/* NEW: Total Live Hours Card */}
+                    <div className="stat-card total-hours">
+                        <div className="stat-info">
+                            <h3>⏱️ {stats.totalLiveHours}</h3>
+                            <p>Total Live Hours</p>
                         </div>
                     </div>
                 </div>
@@ -166,9 +276,10 @@ function HostDashboard() {
                                             <div className="info-item">
                                                 <span className="info-label">Durasi:</span>
                                                 <span className="info-value" style={{
-                                                    color: report.live_duration ? '#2c3e50' : '#95a5a6'
+                                                    color: report.live_duration ? '#e67e22' : '#95a5a6',
+                                                    fontWeight: report.live_duration ? '600' : 'normal'
                                                 }}>
-                                                    ⏱️ {report.live_duration || 'Tidak terdeteksi'}
+                                                    {report.live_duration || 'Tidak terdeteksi'}
                                                 </span>
                                             </div>
                                             
