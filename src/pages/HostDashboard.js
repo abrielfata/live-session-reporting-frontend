@@ -202,7 +202,6 @@ function HostDashboard() {
                         </div>
                     </div>
 
-                    {/* NEW: Total Live Hours Card */}
                     <div className="stat-card total-hours">
                         <div className="stat-info">
                             <h3>⏱️ {stats.totalLiveHours}</h3>
@@ -288,16 +287,7 @@ function HostDashboard() {
                                             )}
                                         </div>
                                         
-                                        {report.screenshot_url && (
-                                            <a 
-                                                href={report.screenshot_url} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="view-screenshot"
-                                            >
-                                                View Screenshot
-                                            </a>
-                                        )}
+                                        {/* ❌ REMOVED: View Screenshot button */}
                                     </div>
                                 </div>
                             ))
