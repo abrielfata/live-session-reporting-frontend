@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Navbar from '../components/Navbar';
 import { usersAPI } from '../services/api';
 import './UserManagement.css';
 
@@ -65,8 +64,6 @@ function UserManagement() {
 
     return (
         <div className="user-management">
-            <Navbar />
-            
             <div className="user-management-container">
                 <h1>User Management</h1>
                 <p>Review and approve new user registrations</p>

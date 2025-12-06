@@ -19,15 +19,63 @@
 
 .host-management-container > p {
     color: #95a5a6;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     font-size: 14px;
     font-family: 'Arial', sans-serif;
 }
 
-/* Header Actions */
+/* NEW: Info Box for Instructions */
+.info-box {
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+    border-left: 4px solid #4caf50;
+    padding: 15px 20px;
+    border-radius: 8px;
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.info-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-content strong {
+    display: block;
+    color: #2c3e50;
+    font-size: 14px;
+    margin-bottom: 5px;
+    font-family: 'Arial', sans-serif;
+}
+
+.info-content p {
+    color: #546e7a;
+    font-size: 13px;
+    margin: 0;
+    line-height: 1.5;
+    font-family: 'Arial', sans-serif;
+}
+
+.info-content code {
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    color: #e91e63;
+    font-weight: 600;
+    font-size: 12px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Header Actions - WITHOUT Add Button */
 .header-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 25px;
     gap: 15px;
@@ -38,6 +86,7 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    flex: 1;
 }
 
 .filter-controls select,
@@ -74,23 +123,6 @@
     transform: translateY(-50%);
     pointer-events: none;
     font-size: 14px;
-}
-
-.btn-add-host {
-    padding: 10px 20px;
-    background: #27ae60;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s;
-    font-family: 'Arial', sans-serif;
-}
-
-.btn-add-host:hover {
-    background: #229954;
 }
 
 /* Hosts Table */
@@ -162,6 +194,7 @@
     display: flex;
     gap: 6px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .status-badge {
@@ -353,6 +386,13 @@
     cursor: not-allowed;
 }
 
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #999;
+}
+
 .checkbox-group {
     display: flex;
     align-items: center;
@@ -419,6 +459,11 @@
 @media (max-width: 768px) {
     .host-management-container {
         padding: 20px 15px;
+    }
+
+    .info-box {
+        flex-direction: column;
+        gap: 10px;
     }
 
     .header-actions {

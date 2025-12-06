@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Navbar from '../components/Navbar';
 import { hostsAPI } from '../services/api';
 import './HostManagement.css';
 
@@ -10,9 +9,8 @@ function HostManagement() {
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     
-    // Modal state
+    // Modal state - ONLY FOR EDIT
     const [showModal, setShowModal] = useState(false);
-    const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
     const [selectedHost, setSelectedHost] = useState(null);
     const [formData, setFormData] = useState({
         telegram_user_id: '',
@@ -65,21 +63,8 @@ function HostManagement() {
         );
     });
 
-    // Modal handlers
-    const openCreateModal = () => {
-        setModalMode('create');
-        setFormData({
-            telegram_user_id: '',
-            username: '',
-            full_name: '',
-            is_active: true,
-            is_approved: true
-        });
-        setShowModal(true);
-    };
-
+    // Modal handlers - ONLY FOR EDIT
     const openEditModal = (host) => {
-        setModalMode('edit');
         setSelectedHost(host);
         setFormData({
             telegram_user_id: host.telegram_user_id,
@@ -108,19 +93,13 @@ function HostManagement() {
         e.preventDefault();
         
         try {
-            if (modalMode === 'create') {
-                await hostsAPI.createHost(formData);
-                alert('Host created successfully!');
-            } else {
-                await hostsAPI.updateHost(selectedHost.id, formData);
-                alert('Host updated successfully!');
-            }
-            
+            await hostsAPI.updateHost(selectedHost.id, formData);
+            alert('Host updated successfully!');
             closeModal();
             fetchHosts();
         } catch (error) {
-            console.error('Error saving host:', error);
-            alert(error.response?.data?.message || 'Failed to save host');
+            console.error('Error updating host:', error);
+            alert(error.response?.data?.message || 'Failed to update host');
         }
     };
 
@@ -157,11 +136,18 @@ function HostManagement() {
 
     return (
         <div className="host-management">
-            <Navbar />
-            
             <div className="host-management-container">
                 <h1>Host Management</h1>
                 <p>Manage host accounts and view their performance</p>
+
+                {/* Info Box - How to Add New Host */}
+                <div className="info-box">
+                    <div className="info-icon">ℹ️</div>
+                    <div className="info-content">
+                        <strong>How to Add New Host:</strong>
+                        <p>New hosts must register through the Telegram Bot by typing <code>/start</code> and providing their full name. Once registered, you can approve them in the "Pending Users" menu.</p>
+                    </div>
+                </div>
 
                 <div className="header-actions">
                     <div className="filter-controls">
@@ -192,10 +178,6 @@ function HostManagement() {
                             />
                         </div>
                     </div>
-
-                    <button className="btn-add-host" onClick={openCreateModal}>
-                        + Add New Host
-                    </button>
                 </div>
 
                 {loading ? (
@@ -284,28 +266,33 @@ function HostManagement() {
                 )}
             </div>
 
-            {/* Modal for Create/Edit */}
+            {/* Modal for EDIT ONLY */}
             {showModal && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>{modalMode === 'create' ? 'Add New Host' : 'Edit Host'}</h2>
+                            <h2>Edit Host</h2>
                             <button className="modal-close" onClick={closeModal}>×</button>
                         </div>
                         
                         <form onSubmit={handleSubmit}>
                             <div className="modal-body">
                                 <div className="form-group">
-                                    <label>Telegram User ID *</label>
+                                    <label>Telegram User ID</label>
                                     <input
                                         type="text"
                                         name="telegram_user_id"
                                         value={formData.telegram_user_id}
-                                        onChange={handleFormChange}
-                                        required
-                                        placeholder="e.g., 123456789"
-                                        disabled={modalMode === 'edit'}
+                                        disabled
+                                        style={{ 
+                                            background: '#f5f5f5', 
+                                            cursor: 'not-allowed',
+                                            color: '#999'
+                                        }}
                                     />
+                                    <small style={{ color: '#999', fontSize: '12px' }}>
+                                        Cannot be changed
+                                    </small>
                                 </div>
 
                                 <div className="form-group">
@@ -363,7 +350,7 @@ function HostManagement() {
                                     Cancel
                                 </button>
                                 <button type="submit" className="btn-modal btn-submit">
-                                    {modalMode === 'create' ? 'Create Host' : 'Update Host'}
+                                    Update Host
                                 </button>
                             </div>
                         </form>
