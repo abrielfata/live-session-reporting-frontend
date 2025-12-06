@@ -100,7 +100,6 @@
     border-left-color: #3498db;
 }
 
-/* NEW: Total Hours Card Style */
 .stat-card.total-hours {
     border-left-color: #e67e22;
     background: linear-gradient(135deg, #fff 0%, #fff8f0 100%);
@@ -256,7 +255,6 @@
 .report-info {
     display: grid;
     gap: 12px;
-    margin-bottom: 15px;
 }
 
 .info-item {
@@ -277,24 +275,6 @@
     font-size: 13px;
     font-family: 'Arial', sans-serif;
     font-weight: 500;
-}
-
-.view-screenshot {
-    display: inline-block;
-    color: #3498db;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 8px 16px;
-    border: 1px solid #3498db;
-    border-radius: 5px;
-    transition: all 0.2s;
-    font-family: 'Arial', sans-serif;
-    font-size: 13px;
-}
-
-.view-screenshot:hover {
-    background: #3498db;
-    color: white;
 }
 
 .empty-state {
