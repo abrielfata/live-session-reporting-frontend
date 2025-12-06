@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { reportsAPI } from '../services/api';
+import { useToast } from '../utils/useToast';
+import ToastContainer from '../components/ToastContainer';
 import './ManagerDashboard.css';
 
 function ManagerDashboard() {
@@ -14,6 +16,7 @@ function ManagerDashboard() {
     // Month filter state
     const [selectedMonth, setSelectedMonth] = useState('current');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const { toasts, showToast, removeToast } = useToast();
 
     // Fetch available months for dropdown
     const fetchAvailableMonths = useCallback(async () => {
@@ -88,6 +91,8 @@ function ManagerDashboard() {
             setReports(response.data.data.reports);
         } catch (error) {
             console.error('Error fetching reports:', error);
+            // Optional: Show toast on fetch error
+            // showToast('Failed to load reports', 'error');
         } finally {
             setLoading(false);
         }
@@ -109,13 +114,21 @@ function ManagerDashboard() {
     const handleUpdateStatus = async (reportId, newStatus) => {
         try {
             await reportsAPI.updateReportStatus(reportId, newStatus, '');
-            alert(`Report berhasil di${newStatus === 'VERIFIED' ? 'verifikasi' : 'tolak'}`);
+            
+            // ✅ 3. Replace alert with Toast (Success)
+            showToast(
+                `Report ${newStatus === 'VERIFIED' ? 'verified' : 'rejected'} successfully!`, 
+                'success'
+            );
+
             fetchReports();
             fetchStatistics();
             fetchHostStatistics();
         } catch (error) {
             console.error('Error updating status:', error);
-            alert('Gagal mengupdate status');
+            
+            // ✅ 4. Replace alert with Toast (Error)
+            showToast('Failed to update report status', 'error');
         }
     };
 
@@ -407,6 +420,8 @@ function ManagerDashboard() {
                     </div>
                 )}
             </div>
+
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 }

@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usersAPI } from '../services/api';
+// ✅ 1. Import Toast dependencies
+import { useToast } from '../utils/useToast';
+import ToastContainer from '../components/ToastContainer';
 import './UserManagement.css';
 
 function UserManagement() {
     const [pendingUsers, setPendingUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // ✅ 2. Initialize Toast Hook
+    const { toasts, showToast, removeToast } = useToast();
 
     const fetchPendingUsers = useCallback(async () => {
         setLoading(true);
@@ -13,6 +19,7 @@ function UserManagement() {
             setPendingUsers(response.data.data);
         } catch (error) {
             console.error('Error fetching pending users:', error);
+            // Optional: showToast('Failed to load pending users', 'error');
         } finally {
             setLoading(false);
         }
@@ -29,11 +36,16 @@ function UserManagement() {
 
         try {
             await usersAPI.approveUser(userId);
-            alert(`User "${userName}" has been approved!`);
+            
+            // ✅ 3. Replace alert with Toast (Success)
+            showToast(`User "${userName}" has been approved!`, 'success');
+            
             fetchPendingUsers(); // Refresh list
         } catch (error) {
             console.error('Error approving user:', error);
-            alert('Failed to approve user');
+            
+            // ✅ 4. Replace alert with Toast (Error)
+            showToast('Failed to approve user', 'error');
         }
     };
 
@@ -44,11 +56,16 @@ function UserManagement() {
 
         try {
             await usersAPI.rejectUser(userId);
-            alert(`User "${userName}" has been rejected and deleted.`);
+            
+            // ✅ 5. Replace alert with Toast (Success)
+            showToast(`User "${userName}" has been rejected and deleted.`, 'success');
+            
             fetchPendingUsers(); // Refresh list
         } catch (error) {
             console.error('Error rejecting user:', error);
-            alert('Failed to reject user');
+            
+            // ✅ 6. Replace alert with Toast (Error)
+            showToast('Failed to reject user', 'error');
         }
     };
 
@@ -137,6 +154,9 @@ function UserManagement() {
                     </div>
                 )}
             </div>
+
+            {/* ✅ 7. Render Toast Container */}
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 }
