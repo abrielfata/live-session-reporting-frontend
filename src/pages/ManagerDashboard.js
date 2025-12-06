@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Navbar from '../components/Navbar';
 import { reportsAPI } from '../services/api';
 import './ManagerDashboard.css';
 
@@ -172,9 +171,7 @@ function ManagerDashboard() {
     });
 
     return (
-        <div className="dashboard">
-            <Navbar />
-            
+        <div className="dashboard">            
             <div className="dashboard-container">
                 <h1>Manager Dashboard</h1>
                 <p>Manage and review live session reports</p>

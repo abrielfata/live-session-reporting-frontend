@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Navbar from '../components/Navbar';
 import { reportsAPI } from '../services/api';
 import './HostDashboard.css';
 
@@ -133,9 +132,7 @@ function HostDashboard() {
     };
 
     return (
-        <div className="dashboard">
-            <Navbar />
-            
+        <div className="dashboard">            
             <div className="dashboard-container">
                 <h1>Host Dashboard</h1>
                 <p>Your live session reports</p>

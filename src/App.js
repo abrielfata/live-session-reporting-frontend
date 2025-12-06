@@ -5,7 +5,8 @@ import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/ManagerDashboard';
 import HostDashboard from './pages/HostDashboard';
 import UserManagement from './pages/UserManagement';
-import HostManagement from './pages/HostManagement'; // ✅ NEW
+import HostManagement from './pages/HostManagement';
+import Sidebar from './components/Sidebar'; // ✅ NEW: Import Sidebar
 
 import './App.css';
 
@@ -29,7 +30,7 @@ function NotFound() {
     );
 }
 
-// Protected Route Component
+// Protected Route Component with Sidebar Layout
 function ProtectedRoute({ children, allowedRoles }) {
     const { user, loading } = useAuth();
 
@@ -45,7 +46,15 @@ function ProtectedRoute({ children, allowedRoles }) {
         return <Navigate to="/login" />;
     }
 
-    return children;
+    // ✅ NEW: Wrap with Sidebar Layout
+    return (
+        <div className="app-layout">
+            <Sidebar />
+            <div className="main-content">
+                {children}
+            </div>
+        </div>
+    );
 }
 
 function App() {
@@ -86,7 +95,7 @@ function App() {
                         } 
                     />
                     
-                    {/* Protected Route: User Management (Manager Only) */}
+                    {/* Protected Route: User Management */}
                     <Route 
                         path="/users" 
                         element={
@@ -96,7 +105,7 @@ function App() {
                         } 
                     />
                     
-                    {/* ✅ NEW: Protected Route: Host Management (Manager Only) */}
+                    {/* Protected Route: Host Management */}
                     <Route 
                         path="/hosts" 
                         element={
