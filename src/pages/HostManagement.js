@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { hostsAPI } from '../services/api';
+import { useToast } from '../utils/useToast';
+import ToastContainer from '../components/ToastContainer';
 import './HostManagement.css';
 
 function HostManagement() {
     const [hosts, setHosts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('approved'); 
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     
@@ -20,17 +22,21 @@ function HostManagement() {
         is_approved: true
     });
 
+    const { toasts, showToast, removeToast } = useToast();
+
     const fetchHosts = useCallback(async () => {
         setLoading(true);
         try {
             const params = {};
-            if (statusFilter !== 'all') params.status = statusFilter;
+            params.status = statusFilter;
             if (activeFilter !== 'all') params.is_active = activeFilter;
             
             const response = await hostsAPI.getAllHosts(params);
             setHosts(response.data.data);
         } catch (error) {
             console.error('Error fetching hosts:', error);
+            // Optional: Show toast on fetch error too if needed
+            // showToast('Failed to load hosts', 'error');
         } finally {
             setLoading(false);
         }
@@ -94,12 +100,15 @@ function HostManagement() {
         
         try {
             await hostsAPI.updateHost(selectedHost.id, formData);
-            alert('Host updated successfully!');
+            
+            showToast('Host updated successfully!', 'success');
+            
             closeModal();
             fetchHosts();
         } catch (error) {
             console.error('Error updating host:', error);
-            alert(error.response?.data?.message || 'Failed to update host');
+            
+            showToast(error.response?.data?.message || 'Failed to update host', 'error');
         }
     };
 
@@ -111,11 +120,14 @@ function HostManagement() {
 
         try {
             await hostsAPI.toggleHostStatus(host.id);
-            alert(`Host ${action}d successfully!`);
+            
+            showToast(`Host ${action}d successfully!`, 'success');
+            
             fetchHosts();
         } catch (error) {
             console.error('Error toggling status:', error);
-            alert('Failed to toggle status');
+            
+            showToast('Failed to toggle status', 'error');
         }
     };
 
@@ -126,11 +138,14 @@ function HostManagement() {
 
         try {
             await hostsAPI.deleteHost(host.id);
-            alert('Host deleted successfully!');
+            
+            showToast('Host deleted successfully!', 'success');
+            
             fetchHosts();
         } catch (error) {
             console.error('Error deleting host:', error);
-            alert('Failed to delete host');
+            
+            showToast('Failed to delete host', 'error');
         }
     };
 
@@ -357,6 +372,8 @@ function HostManagement() {
                     </div>
                 </div>
             )}
+
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 }
