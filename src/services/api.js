@@ -24,9 +24,9 @@ api.interceptors.request.use(
 
 // Auth API
 export const authAPI = {
-    // ✅ UPDATED: login with password
-    login: (telegram_user_id, password) => {
-        return api.post('/auth/login', { telegram_user_id, password });
+    // Login with email and password
+    login: (email, password) => {
+        return api.post('/auth/login', { email, password });
     },
     getCurrentUser: () => {
         return api.get('/auth/me');
