@@ -1,82 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { reportsAPI } from '../services/api';
+import React, { useState, useMemo } from 'react';
+import {
+    useMyReportsQuery,
+    useAvailableMonthsQuery
+} from '../hooks/useReports';
+import { formatCurrency, formatDateTime } from '../utils/format';
 import './HostDashboard.css';
 
 function HostDashboard() {
-    const [reports, setReports] = useState([]);
-    const [availableMonths, setAvailableMonths] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
     
     // Month filter
     const [selectedMonth, setSelectedMonth] = useState('current');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-    // Fetch available months
-    const fetchAvailableMonths = useCallback(async () => {
-        try {
-            const response = await reportsAPI.getAvailableMonths();
-            setAvailableMonths(response.data.data);
-        } catch (error) {
-            console.error('Error fetching available months:', error);
-        }
-    }, []);
-
-    const fetchMyReports = useCallback(async () => {
-        setLoading(true);
-        try {
-            const params = {};
-            if (filter !== 'ALL') params.status = filter;
-            
-            if (selectedMonth !== 'all') {
-                if (selectedMonth === 'current') {
-                    params.month = new Date().getMonth() + 1;
-                    params.year = new Date().getFullYear();
-                } else {
-                    params.month = parseInt(selectedMonth);
-                    params.year = selectedYear;
-                }
-            }
-            
-            const response = await reportsAPI.getMyReports(params);
-            setReports(response.data.data.reports);
-        } catch (error) {
-            console.error('Error fetching my reports:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, [filter, selectedMonth, selectedYear]);
-
-    useEffect(() => {
-        fetchAvailableMonths();
-    }, [fetchAvailableMonths]);
-
-    useEffect(() => {
-        fetchMyReports();
-    }, [fetchMyReports]);
-
-    const formatCurrency = (amount) => {
-        if (amount >= 1000000) {
-            return 'Rp ' + (amount / 1000000).toFixed(1) + 'M';
-        } else if (amount >= 1000) {
-            return 'Rp ' + (amount / 1000).toFixed(0) + 'K';
-        }
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(amount);
-    };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString('id-ID', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+    const { data: availableMonths = [], isLoading: loadingMonths, error: monthsError } = useAvailableMonthsQuery();
+    const { data: reportsData, isLoading: loadingReports, error: reportsError } = useMyReportsQuery(filter, selectedMonth, selectedYear);
+    const reports = useMemo(() => reportsData?.reports || [], [reportsData]);
 
     // Calculate total live hours from duration strings
     const calculateTotalLiveHours = () => {
@@ -120,7 +59,9 @@ function HostDashboard() {
         return `${monthNames[selectedMonth - 1]} ${selectedYear}`;
     };
 
-    const stats = {
+    const totalLiveHours = calculateTotalLiveHours();
+
+    const stats = useMemo(() => ({
         total: reports.length,
         pending: reports.filter(r => r.status === 'PENDING').length,
         verified: reports.filter(r => r.status === 'VERIFIED').length,
@@ -128,8 +69,8 @@ function HostDashboard() {
         totalGMV: reports
             .filter(r => r.status === 'VERIFIED')
             .reduce((sum, r) => sum + parseFloat(r.reported_gmv), 0),
-        totalLiveHours: calculateTotalLiveHours()
-    };
+        totalLiveHours
+    }), [reports, totalLiveHours]);
 
     return (
         <div className="dashboard">            
@@ -240,14 +181,20 @@ function HostDashboard() {
                     </div>
                 </div>
 
-                {loading ? (
+                {(loadingReports || loadingMonths) ? (
                     <div className="loading">Loading reports...</div>
                 ) : (
                     <div className="reports-list">
                         {reports.length === 0 ? (
                             <div className="empty-state">
-                                <p>No reports yet</p>
-                                <small>Submit your GMV screenshot via Telegram Bot</small>
+                                {reportsError || monthsError ? (
+                                    <p>Failed to load data</p>
+                                ) : (
+                                    <>
+                                        <p>No reports yet</p>
+                                        <small>Submit your GMV screenshot via Telegram Bot</small>
+                                    </>
+                                )}
                             </div>
                         ) : (
                             reports.map(report => (
@@ -255,7 +202,7 @@ function HostDashboard() {
                                     <div className="report-header">
                                         <div>
                                             <h3>Report #{report.id}</h3>
-                                            <p className="report-date">{formatDate(report.created_at)}</p>
+                                            <p className="report-date">{formatDateTime(report.created_at)}</p>
                                         </div>
                                         <span className={`status-badge ${report.status.toLowerCase()}`}>
                                             {report.status}

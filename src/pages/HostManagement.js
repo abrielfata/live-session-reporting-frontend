@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { hostsAPI } from '../services/api';
+import {
+    useHostsQuery,
+    useUpdateHostMutation,
+    useToggleHostStatusMutation,
+    useDeleteHostMutation
+} from '../hooks/useHosts';
 import { useToast } from '../utils/useToast';
+import { formatCurrency } from '../utils/format';
 import ToastContainer from '../components/ToastContainer';
 import './HostManagement.css';
 
 function HostManagement() {
-    const [hosts, setHosts] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('approved'); 
     const [activeFilter, setActiveFilter] = useState('all');
+    const hostsQuery = useHostsQuery(statusFilter, activeFilter);
+    const { mutateAsync: updateHost } = useUpdateHostMutation();
+    const { mutateAsync: toggleHostStatus } = useToggleHostStatusMutation();
+    const { mutateAsync: deleteHost } = useDeleteHostMutation();
     const [searchTerm, setSearchTerm] = useState('');
     
     // Modal state - ONLY FOR EDIT
@@ -27,40 +35,13 @@ function HostManagement() {
 
     const { toasts, showToast, removeToast } = useToast();
 
-    const fetchHosts = useCallback(async () => {
-        setLoading(true);
-        try {
-            const params = {};
-            params.status = statusFilter;
-            if (activeFilter !== 'all') params.is_active = activeFilter;
-            
-            const response = await hostsAPI.getAllHosts(params);
-            setHosts(response.data.data);
-        } catch (error) {
-            console.error('Error fetching hosts:', error);
-        } finally {
-            setLoading(false);
-        }
+    useEffect(() => {
+        // react-query handles fetching automatically when filters change
     }, [statusFilter, activeFilter]);
 
-    useEffect(() => {
-        fetchHosts();
-    }, [fetchHosts]);
-
-    const formatCurrency = (amount) => {
-        if (amount >= 1000000) {
-            return 'Rp ' + (amount / 1000000).toFixed(1) + 'M';
-        } else if (amount >= 1000) {
-            return 'Rp ' + (amount / 1000).toFixed(0) + 'K';
-        }
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(amount);
-    };
-
     // Filter hosts based on search
+    const hosts = hostsQuery.data || [];
+
     const filteredHosts = hosts.filter(host => {
         const searchLower = searchTerm.toLowerCase();
         return (
@@ -100,6 +81,8 @@ function HostManagement() {
         }));
     };
 
+    const refetchHosts = useCallback(() => hostsQuery.refetch(), [hostsQuery]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -133,12 +116,12 @@ function HostManagement() {
                 updateData.password = formData.password;
             }
 
-            await hostsAPI.updateHost(selectedHost.id, updateData);
+            await updateHost(selectedHost.id, updateData);
             
             showToast('Host updated successfully!', 'success');
             
             closeModal();
-            fetchHosts();
+            refetchHosts();
         } catch (error) {
             console.error('Error updating host:', error);
             
@@ -153,11 +136,11 @@ function HostManagement() {
         }
 
         try {
-            await hostsAPI.toggleHostStatus(host.id);
+            await toggleHostStatus(host.id);
             
             showToast(`Host ${action}d successfully!`, 'success');
             
-            fetchHosts();
+            refetchHosts();
         } catch (error) {
             console.error('Error toggling status:', error);
             
@@ -171,11 +154,11 @@ function HostManagement() {
         }
 
         try {
-            await hostsAPI.deleteHost(host.id);
+            await deleteHost(host.id);
             
             showToast('Host deleted successfully!', 'success');
             
-            fetchHosts();
+            refetchHosts();
         } catch (error) {
             console.error('Error deleting host:', error);
             
@@ -229,7 +212,7 @@ function HostManagement() {
                     </div>
                 </div>
 
-                {loading ? (
+                {hostsQuery.isLoading ? (
                     <div className="loading">Loading hosts...</div>
                 ) : (
                     <div className="table-container">

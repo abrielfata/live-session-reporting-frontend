@@ -25,10 +25,10 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    // ✅ UPDATED: login with password
-    const login = async (telegram_user_id, password) => {
+    // Login with email and password
+    const login = async (email, password) => {
         try {
-            const response = await authAPI.login(telegram_user_id, password);
+            const response = await authAPI.login(email, password);
             const { token, user: userData } = response.data.data;
             
             localStorage.setItem('token', token);
