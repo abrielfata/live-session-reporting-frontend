@@ -1,166 +1,65 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { reportsAPI } from '../services/api';
+import React, { useState, useMemo } from 'react';
+import {
+    useAvailableMonthsQuery,
+    useAllReportsQuery,
+    useReportStatisticsQuery,
+    useHostStatisticsQuery,
+    useUpdateReportStatusMutation,
+    getErrorMessage
+} from '../hooks/useReports';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../utils/useToast';
+import { formatCurrency, formatDateTime, formatHours } from '../utils/format';
 import ToastContainer from '../components/ToastContainer';
 import './ManagerDashboard.css';
 
 function ManagerDashboard() {
-    const [statistics, setStatistics] = useState(null);
-    const [reports, setReports] = useState([]);
-    const [hostStats, setHostStats] = useState([]);
-    const [availableMonths, setAvailableMonths] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');
-    
-    // Month filter state
     const [selectedMonth, setSelectedMonth] = useState('current');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [page, setPage] = useState(1);
+    const pageSize = 10;
     const { toasts, showToast, removeToast } = useToast();
+    const queryClient = useQueryClient();
 
-    // Fetch available months for dropdown
-    const fetchAvailableMonths = useCallback(async () => {
-        try {
-            const response = await reportsAPI.getAvailableMonths();
-            setAvailableMonths(response.data.data);
-        } catch (error) {
-            console.error('Error fetching available months:', error);
-        }
-    }, []);
+    const {
+        data: availableMonths = [],
+        isLoading: loadingMonths,
+        error: monthsError
+    } = useAvailableMonthsQuery();
 
-    // Fetch statistics with month filter
-    const fetchStatistics = useCallback(async () => {
-        try {
-            const params = {};
-            if (selectedMonth !== 'all') {
-                if (selectedMonth === 'current') {
-                    params.month = new Date().getMonth() + 1;
-                    params.year = new Date().getFullYear();
-                } else {
-                    params.month = parseInt(selectedMonth);
-                    params.year = selectedYear;
-                }
-            }
-            
-            const response = await reportsAPI.getStatistics(params);
-            setStatistics(response.data.data);
-        } catch (error) {
-            console.error('Error fetching statistics:', error);
-        }
-    }, [selectedMonth, selectedYear]);
+    const {
+        data: reportsData,
+        isLoading: loadingReports,
+        error: reportsError
+    } = useAllReportsQuery(filter, selectedMonth, selectedYear, page, pageSize);
 
-    // Fetch host statistics with live hours
-    const fetchHostStatistics = useCallback(async () => {
-        try {
-            const params = {};
-            if (selectedMonth !== 'all') {
-                if (selectedMonth === 'current') {
-                    params.month = new Date().getMonth() + 1;
-                    params.year = new Date().getFullYear();
-                } else {
-                    params.month = parseInt(selectedMonth);
-                    params.year = selectedYear;
-                }
-            }
-            
-            const response = await reportsAPI.getMonthlyHostStatistics(params);
-            setHostStats(response.data.data);
-        } catch (error) {
-            console.error('Error fetching host statistics:', error);
-        }
-    }, [selectedMonth, selectedYear]);
+    const {
+        data: statistics,
+        isLoading: loadingStats,
+        error: statsError
+    } = useReportStatisticsQuery(selectedMonth, selectedYear);
 
-    // Fetch reports with month filter
-    const fetchReports = useCallback(async () => {
-        setLoading(true);
-        try {
-            const params = {};
-            if (filter !== 'ALL') params.status = filter;
-            
-            if (selectedMonth !== 'all') {
-                if (selectedMonth === 'current') {
-                    params.month = new Date().getMonth() + 1;
-                    params.year = new Date().getFullYear();
-                } else {
-                    params.month = parseInt(selectedMonth);
-                    params.year = selectedYear;
-                }
-            }
-            
-            const response = await reportsAPI.getAllReports(params);
-            setReports(response.data.data.reports);
-        } catch (error) {
-            console.error('Error fetching reports:', error);
-            // Optional: Show toast on fetch error
-            // showToast('Failed to load reports', 'error');
-        } finally {
-            setLoading(false);
-        }
-    }, [filter, selectedMonth, selectedYear]);
+    const {
+        data: hostStats = [],
+        isLoading: loadingHostStats,
+        error: hostStatsError
+    } = useHostStatisticsQuery(selectedMonth, selectedYear);
 
-    useEffect(() => {
-        fetchAvailableMonths();
-    }, [fetchAvailableMonths]);
-
-    useEffect(() => {
-        fetchStatistics();
-        fetchHostStatistics();
-    }, [fetchStatistics, fetchHostStatistics]);
-
-    useEffect(() => {
-        fetchReports();
-    }, [fetchReports]);
+    const { mutateAsync: updateStatus } = useUpdateReportStatusMutation();
 
     const handleUpdateStatus = async (reportId, newStatus) => {
         try {
-            await reportsAPI.updateReportStatus(reportId, newStatus, '');
-            
-            // ✅ 3. Replace alert with Toast (Success)
+            await updateStatus({ id: reportId, status: newStatus, notes: '' });
             showToast(
                 `Report ${newStatus === 'VERIFIED' ? 'verified' : 'rejected'} successfully!`, 
                 'success'
             );
-
-            fetchReports();
-            fetchStatistics();
-            fetchHostStatistics();
         } catch (error) {
             console.error('Error updating status:', error);
-            
-            // ✅ 4. Replace alert with Toast (Error)
             showToast('Failed to update report status', 'error');
         }
-    };
-
-    const formatCurrency = (amount) => {
-        if (amount >= 1000000) {
-            return 'Rp ' + (amount / 1000000).toFixed(1) + 'M';
-        } else if (amount >= 1000) {
-            return 'Rp ' + (amount / 1000).toFixed(0) + 'K';
-        }
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(amount);
-    };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString('id-ID', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const formatHours = (hours) => {
-        const h = Math.floor(hours);
-        const m = Math.round((hours - h) * 60);
-        if (h === 0) return `${m} menit`;
-        if (m === 0) return `${h} jam`;
-        return `${h} jam ${m} menit`;
     };
 
     const getMonthDisplay = () => {
@@ -174,14 +73,95 @@ function ManagerDashboard() {
         return `${monthNames[selectedMonth - 1]} ${selectedYear}`;
     };
 
-    // Filter reports by search term
-    const filteredReports = reports.filter(report => {
+    const reports = useMemo(() => reportsData?.reports || [], [reportsData]);
+    const pagination = useMemo(
+        () => reportsData?.pagination || { page: 1, totalPages: 1, total: (reportsData?.reports || []).length },
+        [reportsData]
+    );
+
+    const filteredReports = useMemo(() => reports.filter(report => {
         const searchLower = searchTerm.toLowerCase();
         return (
             report.host_full_name.toLowerCase().includes(searchLower) ||
             report.host_username.toLowerCase().includes(searchLower)
         );
-    });
+    }), [reports, searchTerm]);
+
+    const loadingAny = loadingReports || loadingMonths || loadingStats || loadingHostStats;
+    const hasError = reportsError || monthsError || statsError || hostStatsError;
+    const errorMessage = hasError ? getErrorMessage(reportsError || monthsError || statsError || hostStatsError) : null;
+
+    const handleRefresh = () => {
+        queryClient.invalidateQueries({ queryKey: ['reports'] });
+        queryClient.invalidateQueries({ queryKey: ['reports', 'statistics'] });
+        queryClient.invalidateQueries({ queryKey: ['reports', 'hostStats'] });
+        queryClient.invalidateQueries({ queryKey: ['reports', 'availableMonths'] });
+    };
+
+    const handlePageChange = (nextPage) => {
+        if (nextPage < 1 || nextPage > (pagination.totalPages || 1)) return;
+        setPage(nextPage);
+    };
+
+    const renderStatsSkeleton = () => (
+        <div className="stats-grid">
+            {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="stat-card">
+                    <div className="stat-info">
+                        <div className="skeleton skeleton-number" />
+                        <div className="skeleton skeleton-text short" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
+    const renderTableSkeleton = () => (
+        <div className="table-container">
+            <table className="reports-table">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Host</th><th>GMV</th><th>Durasi</th><th>Status</th><th>Date</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                        <tr key={idx}>
+                            {Array.from({ length: 7 }).map((__, i2) => (
+                                <td key={i2}><div className="skeleton skeleton-text" /></td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const renderHostSkeleton = () => (
+        <div className="host-analytics">
+            <h3>Host Performance - {getMonthDisplay()}</h3>
+            <div className="host-list">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                    <div key={idx} className="host-item-extended">
+                        <div className="host-name-section">
+                            <div className="skeleton skeleton-text" style={{ width: '140px' }} />
+                            <div className="skeleton skeleton-text short" style={{ width: '90px' }} />
+                        </div>
+                        {Array.from({ length: 4 }).map((__, i2) => (
+                            <div key={i2} className="host-stat">
+                                <span className="skeleton skeleton-text short" style={{ width: '80px' }} />
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    // reset page when filter or month changes
+    React.useEffect(() => {
+        setPage(1);
+    }, [filter, selectedMonth, selectedYear]);
 
     return (
         <div className="dashboard">            
@@ -200,7 +180,6 @@ function ManagerDashboard() {
                         onChange={(e) => {
                             setSelectedMonth(e.target.value);
                             if (e.target.value !== 'current' && e.target.value !== 'all') {
-                                // Extract year from available months if needed
                                 const selected = availableMonths.find(m => m.month === parseInt(e.target.value));
                                 if (selected) setSelectedYear(selected.year);
                             }
@@ -218,8 +197,16 @@ function ManagerDashboard() {
                     </select>
                 </div>
 
+                {hasError && (
+                    <div className="error-banner">
+                        {errorMessage || 'Failed to load data'}
+                    </div>
+                )}
+
                 {/* Statistics Cards */}
-                {statistics && (
+                {loadingStats ? (
+                    renderStatsSkeleton()
+                ) : statistics && !statsError ? (
                     <div className="stats-grid">
                         <div className="stat-card">
                             <div className="stat-info">
@@ -263,10 +250,12 @@ function ManagerDashboard() {
                             </div>
                         </div>
                     </div>
-                )}
+                ) : null}
 
                 {/* Host Performance Analytics with Live Hours */}
-                {!loading && hostStats.length > 0 && (
+                {loadingHostStats ? (
+                    renderHostSkeleton()
+                ) : hostStats.length > 0 && !hostStatsError ? (
                     <div className="host-analytics">
                         <h3>Host Performance - {getMonthDisplay()}</h3>
                         <div className="host-list">
@@ -300,7 +289,7 @@ function ManagerDashboard() {
                             ))}
                         </div>
                     </div>
-                )}
+                ) : null}
 
                 {/* Reports Table */}
                 <div className="filter-section">
@@ -340,11 +329,35 @@ function ManagerDashboard() {
                                 Rejected
                             </button>
                         </div>
+                        <button
+                            className="filter-refresh"
+                            onClick={handleRefresh}
+                            style={{ marginLeft: '8px' }}
+                        >
+                            Refresh
+                        </button>
+                        <div className="pagination-inline">
+                            <button
+                                disabled={page <= 1}
+                                onClick={() => handlePageChange(page - 1)}
+                            >
+                                ‹
+                            </button>
+                            <span>
+                                {pagination.page || page}/{pagination.totalPages || 1}
+                            </span>
+                            <button
+                                disabled={page >= (pagination.totalPages || 1)}
+                                onClick={() => handlePageChange(page + 1)}
+                            >
+                                ›
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {loading ? (
-                    <div className="loading">Loading reports...</div>
+                {loadingAny ? (
+                    renderTableSkeleton()
                 ) : (
                     <div className="table-container">
                         <table className="reports-table">
@@ -363,7 +376,7 @@ function ManagerDashboard() {
                                 {filteredReports.length === 0 ? (
                                     <tr>
                                         <td colSpan="7" style={{ textAlign: 'center' }}>
-                                            {searchTerm ? 'No reports found' : 'No reports available'}
+                                            {hasError ? (errorMessage || 'Failed to load data') : (searchTerm ? 'No reports found' : 'No reports available')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -391,7 +404,7 @@ function ManagerDashboard() {
                                                     {report.status}
                                                 </span>
                                             </td>
-                                            <td>{formatDate(report.created_at)}</td>
+                                            <td>{formatDateTime(report.created_at)}</td>
                                             <td>
                                                 {report.status === 'PENDING' ? (
                                                     <div className="action-buttons">
@@ -419,6 +432,7 @@ function ManagerDashboard() {
                         </table>
                     </div>
                 )}
+
             </div>
 
             <ToastContainer toasts={toasts} removeToast={removeToast} />

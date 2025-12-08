@@ -1,33 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { usersAPI } from '../services/api';
-// ✅ 1. Import Toast dependencies
+import React from 'react';
+import {
+    usePendingUsersQuery,
+    useApproveUserMutation,
+    useRejectUserMutation
+} from '../hooks/useUsers';
 import { useToast } from '../utils/useToast';
 import ToastContainer from '../components/ToastContainer';
 import './UserManagement.css';
 
 function UserManagement() {
-    const [pendingUsers, setPendingUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    // ✅ 2. Initialize Toast Hook
+    const { data: pendingData, isLoading } = usePendingUsersQuery();
+    const { mutateAsync: approveUser } = useApproveUserMutation();
+    const { mutateAsync: rejectUser } = useRejectUserMutation();
+    const pendingUsers = pendingData?.data || [];
     const { toasts, showToast, removeToast } = useToast();
-
-    const fetchPendingUsers = useCallback(async () => {
-        setLoading(true);
-        try {
-            const response = await usersAPI.getPendingUsers();
-            setPendingUsers(response.data.data);
-        } catch (error) {
-            console.error('Error fetching pending users:', error);
-            // Optional: showToast('Failed to load pending users', 'error');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchPendingUsers();
-    }, [fetchPendingUsers]);
 
     const handleApprove = async (userId, userName) => {
         if (!window.confirm(`Approve user "${userName}"?`)) {
@@ -35,12 +21,8 @@ function UserManagement() {
         }
 
         try {
-            await usersAPI.approveUser(userId);
-            
-            // ✅ 3. Replace alert with Toast (Success)
+            await approveUser(userId);
             showToast(`User "${userName}" has been approved!`, 'success');
-            
-            fetchPendingUsers(); // Refresh list
         } catch (error) {
             console.error('Error approving user:', error);
             
@@ -55,12 +37,8 @@ function UserManagement() {
         }
 
         try {
-            await usersAPI.rejectUser(userId);
-            
-            // ✅ 5. Replace alert with Toast (Success)
+            await rejectUser(userId);
             showToast(`User "${userName}" has been rejected and deleted.`, 'success');
-            
-            fetchPendingUsers(); // Refresh list
         } catch (error) {
             console.error('Error rejecting user:', error);
             
@@ -94,7 +72,7 @@ function UserManagement() {
                     )}
                 </div>
 
-                {loading ? (
+                {isLoading ? (
                     <div className="loading">Loading pending users...</div>
                 ) : (
                     <div className="users-grid">

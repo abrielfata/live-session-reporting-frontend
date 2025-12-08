@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
-import { usersAPI } from '../services/api';
+import usersClient from '../api/usersClient';
 import './Sidebar.css';
 
 function Sidebar() {
@@ -23,7 +23,7 @@ function Sidebar() {
 
     const fetchPendingCount = async () => {
         try {
-            const response = await usersAPI.getPendingUsers();
+            const response = await usersClient.getPending();
             setPendingCount(response.data.total);
         } catch (error) {
             console.error('Error fetching pending count:', error);
