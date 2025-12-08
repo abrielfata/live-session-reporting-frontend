@@ -4,11 +4,11 @@ import { useAuth } from '../utils/AuthContext';
 import './LoginPage.css';
 
 function LoginPage() {
-    const [telegramUserId, setTelegramUserId] = useState('');
-    const [password, setPassword] = useState(''); // ✅ CHANGED from username
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false); // ✅ NEW
+    const [showPassword, setShowPassword] = useState(false);
     
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -18,15 +18,22 @@ function LoginPage() {
         setError('');
         
         // Validasi input
-        if (!telegramUserId || !password) {
-            setError('Telegram User ID dan Password wajib diisi');
+        if (!email || !password) {
+            setError('Email dan Password wajib diisi');
+            return;
+        }
+
+        // Validasi format email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError('Format email tidak valid');
             return;
         }
 
         setLoading(true);
 
         // Call login API
-        const result = await login(telegramUserId, password);
+        const result = await login(email, password);
 
         setLoading(false);
 
@@ -50,17 +57,17 @@ function LoginPage() {
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label>Telegram User ID</label>
+                        <label>Email Address</label>
                         <input
-                            type="text"
-                            placeholder="Example: 123456789"
-                            value={telegramUserId}
-                            onChange={(e) => setTelegramUserId(e.target.value)}
+                            type="email"
+                            placeholder="name@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             disabled={loading}
+                            autoComplete="email"
                         />
                     </div>
 
-                    {/* ✅ CHANGED: Password field */}
                     <div className="form-group">
                         <label>Password</label>
                         <div style={{ position: 'relative' }}>
@@ -71,6 +78,7 @@ function LoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 disabled={loading}
                                 style={{ paddingRight: '45px' }}
+                                autoComplete="current-password"
                             />
                             <button
                                 type="button"
@@ -84,7 +92,8 @@ function LoginPage() {
                                     border: 'none',
                                     cursor: 'pointer',
                                     fontSize: '14px',
-                                    color: '#7f8c8d'
+                                    color: '#7f8c8d',
+                                    padding: '5px'
                                 }}
                             >
                                 {showPassword ? '🙈' : '👁️'}
@@ -104,11 +113,10 @@ function LoginPage() {
                 </form>
 
                 <div className="login-info">
-                    <p><strong>How to Get User ID?</strong></p>
-                    <p>1. Open Telegram Bot</p>
-                    <p>2. Type <code>/start</code></p>
-                    <p>3. Follow registration steps</p>
-                    <p>4. Your User ID will be sent to you</p>
+                    <p><strong>Demo Accounts</strong></p>
+                    <p>Manager: <code>manager@example.com</code></p>
+                    <p>Host: <code>host@example.com</code></p>
+                    <p>Password: <code>password123</code></p>
                 </div>
             </div>
         </div>
