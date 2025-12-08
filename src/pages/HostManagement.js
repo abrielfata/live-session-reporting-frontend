@@ -13,11 +13,14 @@ function HostManagement() {
     
     // Modal state - ONLY FOR EDIT
     const [showModal, setShowModal] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // ✅ NEW: Password toggle
     const [selectedHost, setSelectedHost] = useState(null);
     const [formData, setFormData] = useState({
         telegram_user_id: '',
         username: '',
         full_name: '',
+        email: '', // ✅ NEW
+        password: '', // ✅ NEW
         is_active: true,
         is_approved: true
     });
@@ -35,8 +38,6 @@ function HostManagement() {
             setHosts(response.data.data);
         } catch (error) {
             console.error('Error fetching hosts:', error);
-            // Optional: Show toast on fetch error too if needed
-            // showToast('Failed to load hosts', 'error');
         } finally {
             setLoading(false);
         }
@@ -76,15 +77,19 @@ function HostManagement() {
             telegram_user_id: host.telegram_user_id,
             username: host.username,
             full_name: host.full_name,
+            email: host.email || '', // ✅ NEW
+            password: '', // ✅ NEW: Always empty (optional field)
             is_active: host.is_active,
             is_approved: host.is_approved
         });
+        setShowPassword(false); // Reset password visibility
         setShowModal(true);
     };
 
     const closeModal = () => {
         setShowModal(false);
         setSelectedHost(null);
+        setShowPassword(false); // Reset password visibility
     };
 
     const handleFormChange = (e) => {
@@ -98,8 +103,37 @@ function HostManagement() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
+        // ✅ NEW: Validate email format if provided
+        if (formData.email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.email)) {
+                showToast('Invalid email format', 'error');
+                return;
+            }
+        }
+
+        // ✅ NEW: Validate password length if provided
+        if (formData.password && formData.password.length < 6) {
+            showToast('Password must be at least 6 characters', 'error');
+            return;
+        }
+
         try {
-            await hostsAPI.updateHost(selectedHost.id, formData);
+            // ✅ NEW: Only send password if it's not empty
+            const updateData = {
+                username: formData.username,
+                full_name: formData.full_name,
+                email: formData.email || undefined, // Send undefined if empty
+                is_active: formData.is_active,
+                is_approved: formData.is_approved
+            };
+
+            // Only include password if user entered a new one
+            if (formData.password && formData.password.trim() !== '') {
+                updateData.password = formData.password;
+            }
+
+            await hostsAPI.updateHost(selectedHost.id, updateData);
             
             showToast('Host updated successfully!', 'success');
             
@@ -160,7 +194,7 @@ function HostManagement() {
                     <div className="info-icon">ℹ️</div>
                     <div className="info-content">
                         <strong>How to Add New Host:</strong>
-                        <p>New hosts must register through the Telegram Bot by typing <code>/start</code> and providing their full name. Once registered, you can approve them in the "Pending Users" menu.</p>
+                        <p>New hosts must register through the Telegram Bot by typing <code>/start</code> and providing their full name, email, and password. Once registered, you can approve them in the "Pending Users" menu.</p>
                     </div>
                 </div>
 
@@ -225,6 +259,15 @@ function HostManagement() {
                                                     <span className="host-name">{host.full_name}</span>
                                                     <span className="host-username">@{host.username}</span>
                                                     <span className="host-telegram-id">{host.telegram_user_id}</span>
+                                                    {host.email && (
+                                                        <span className="host-email" style={{ 
+                                                            fontSize: '11px', 
+                                                            color: '#3498db',
+                                                            fontFamily: 'Courier New, monospace'
+                                                        }}>
+                                                            📧 {host.email}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td>
@@ -331,6 +374,57 @@ function HostManagement() {
                                         required
                                         placeholder="e.g., John Doe"
                                     />
+                                </div>
+
+                                {/* ✅ NEW: Email Field */}
+                                <div className="form-group">
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleFormChange}
+                                        placeholder="e.g., host@example.com"
+                                    />
+                                    <small style={{ color: '#666', fontSize: '12px' }}>
+                                        Used for dashboard login
+                                    </small>
+                                </div>
+
+                                {/* ✅ NEW: Password Field (Optional) */}
+                                <div className="form-group">
+                                    <label>New Password (optional)</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleFormChange}
+                                            placeholder="Leave empty to keep current password"
+                                            style={{ paddingRight: '45px' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '10px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '14px',
+                                                color: '#7f8c8d',
+                                                padding: '5px'
+                                            }}
+                                        >
+                                            {showPassword ? '🙈' : '👁️'}
+                                        </button>
+                                    </div>
+                                    <small style={{ color: '#666', fontSize: '12px' }}>
+                                        Minimum 6 characters
+                                    </small>
                                 </div>
 
                                 <div className="form-group">
