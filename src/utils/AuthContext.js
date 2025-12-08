@@ -7,11 +7,9 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Check if user already logged in (token exists)
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            // Verify token dengan backend
             authAPI.getCurrentUser()
                 .then(response => {
                     setUser(response.data.data);
@@ -27,15 +25,13 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    const login = async (telegram_user_id, username) => {
+    // ✅ UPDATED: login with password
+    const login = async (telegram_user_id, password) => {
         try {
-            const response = await authAPI.login(telegram_user_id, username);
+            const response = await authAPI.login(telegram_user_id, password);
             const { token, user: userData } = response.data.data;
             
-            // Save token to localStorage
             localStorage.setItem('token', token);
-            
-            // Set user state
             setUser(userData);
             
             return { success: true, user: userData };
@@ -60,7 +56,6 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-// Custom hook untuk menggunakan auth context
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {

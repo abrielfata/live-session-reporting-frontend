@@ -5,9 +5,10 @@ import './LoginPage.css';
 
 function LoginPage() {
     const [telegramUserId, setTelegramUserId] = useState('');
-    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState(''); // ✅ CHANGED from username
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // ✅ NEW
     
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -17,15 +18,15 @@ function LoginPage() {
         setError('');
         
         // Validasi input
-        if (!telegramUserId || !username) {
-            setError('Telegram User ID dan Username wajib diisi');
+        if (!telegramUserId || !password) {
+            setError('Telegram User ID dan Password wajib diisi');
             return;
         }
 
         setLoading(true);
 
         // Call login API
-        const result = await login(telegramUserId, username);
+        const result = await login(telegramUserId, password);
 
         setLoading(false);
 
@@ -59,15 +60,36 @@ function LoginPage() {
                         />
                     </div>
 
+                    {/* ✅ CHANGED: Password field */}
                     <div className="form-group">
-                        <label>Username</label>
-                        <input
-                            type="text"
-                            placeholder="Example: john_doe"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            disabled={loading}
-                        />
+                        <label>Password</label>
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="Enter your password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={loading}
+                                style={{ paddingRight: '45px' }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '10px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    color: '#7f8c8d'
+                                }}
+                            >
+                                {showPassword ? '🙈' : '👁️'}
+                            </button>
+                        </div>
                     </div>
 
                     {error && (
@@ -82,9 +104,11 @@ function LoginPage() {
                 </form>
 
                 <div className="login-info">
-                    <p><strong>Demo Accounts</strong></p>
-                    <p>Manager: <code>123456789</code></p>
-                    <p>Host: <code>987654321</code></p>
+                    <p><strong>How to Get User ID?</strong></p>
+                    <p>1. Open Telegram Bot</p>
+                    <p>2. Type <code>/start</code></p>
+                    <p>3. Follow registration steps</p>
+                    <p>4. Your User ID will be sent to you</p>
                 </div>
             </div>
         </div>
