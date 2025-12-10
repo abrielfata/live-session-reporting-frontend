@@ -14,6 +14,8 @@ export const useHostsQuery = (statusFilter, activeFilter) => {
             return res.data.data;
         },
         keepPreviousData: true,
+        refetchInterval: 1000 * 30, // Refetch every 30 seconds for real-time updates
+        refetchOnWindowFocus: true,
     });
 };
 

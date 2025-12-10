@@ -9,6 +9,8 @@ export const usePendingUsersQuery = () =>
             return res.data;
         },
         keepPreviousData: true,
+        refetchInterval: 1000 * 30, // Refetch every 30 seconds for real-time updates
+        refetchOnWindowFocus: true,
     });
 
 export const useApproveUserMutation = () => {
