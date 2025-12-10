@@ -26,6 +26,8 @@ export const useAvailableMonthsQuery = () =>
             return res.data.data;
         },
         staleTime: 1000 * 60,
+        refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+        refetchOnWindowFocus: true,
     });
 
 export const useMyReportsQuery = (filter, selectedMonth, selectedYear, page = 1, limit = 10) => {
@@ -43,6 +45,8 @@ export const useMyReportsQuery = (filter, selectedMonth, selectedYear, page = 1,
             return res.data.data; // { reports, pagination }
         },
         keepPreviousData: true,
+        refetchInterval: 1000 * 15, // Refetch every 15 seconds for real-time updates
+        refetchOnWindowFocus: true,
     });
 };
 
@@ -61,6 +65,8 @@ export const useAllReportsQuery = (filter, selectedMonth, selectedYear, page = 1
             return res.data.data; // { reports, pagination }
         },
         keepPreviousData: true,
+        refetchInterval: 1000 * 15, // Refetch every 15 seconds for real-time updates
+        refetchOnWindowFocus: true,
     });
 };
 
@@ -74,6 +80,8 @@ export const useReportStatisticsQuery = (selectedMonth, selectedYear) => {
             return res.data.data;
         },
         keepPreviousData: true,
+        refetchInterval: 1000 * 15, // Refetch every 15 seconds for real-time updates
+        refetchOnWindowFocus: true,
     });
 };
 
@@ -87,6 +95,8 @@ export const useHostStatisticsQuery = (selectedMonth, selectedYear) => {
             return res.data.data;
         },
         keepPreviousData: true,
+        refetchInterval: 1000 * 15, // Refetch every 15 seconds for real-time updates
+        refetchOnWindowFocus: true,
     });
 };
 
